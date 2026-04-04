@@ -18,7 +18,7 @@ public final class ErrorFilteringStream {
         );
 
         messages
-            .filter((key, msg) -> msg != null && msg.level().equals("ERROR"))
+            .filter((key, msg) -> msg != null && "ERROR".equals(msg.level()))
             .to(outputTopic, Produced.with(Serdes.String(), new LogMessageSerde()));
 
     }

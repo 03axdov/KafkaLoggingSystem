@@ -16,6 +16,7 @@ import org.apache.kafka.streams.StreamsConfig;
 import org.messages.LogMessageSerde;
 import org.messages.Message;
 import org.streaming.ErrorFilteringStream;
+import org.streaming.ErrorCountsStream;
 
 public class App {
     public Properties createProperties() {
@@ -34,6 +35,9 @@ public class App {
         props.put(StreamsConfig.DEFAULT_KEY_SERDE_CLASS_CONFIG, Serdes.StringSerde.class);
         props.put(StreamsConfig.DEFAULT_VALUE_SERDE_CLASS_CONFIG, LogMessageSerde.class);
 
+        props.put(StreamsConfig.STATESTORE_CACHE_MAX_BYTES_CONFIG, 0);
+        props.put(StreamsConfig.COMMIT_INTERVAL_MS_CONFIG, 100);
+
         return props;
     }
 
@@ -41,13 +45,14 @@ public class App {
         App app = new App();
         Properties props = app.createProperties();
         Properties streamProps = app.createStreamProperties();
-        String topic = "raw-logs";
+        String rawLogsTopic = "raw-logs";
 
         StreamsBuilder builder = new StreamsBuilder();
-        ErrorFilteringStream.build(builder, topic, "error-logs");
+        ErrorFilteringStream.build(builder, rawLogsTopic, "error-logs");
+        ErrorCountsStream.build(builder, "error-logs", "error-counts");
 
         try (
-            KafkaLogProducer producer = new KafkaLogProducer(props, topic);
+            KafkaLogProducer producer = new KafkaLogProducer(props, rawLogsTopic);
             KafkaStreams streams = new KafkaStreams(builder.build(), streamProps);
         ) {
             streams.start();
@@ -55,7 +60,7 @@ public class App {
                 Message message = LogGenerator.generateRandomMessage();
                 System.out.println(message);
                 producer.sendMessage(message);
-                Thread.sleep(5000);
+                Thread.sleep(1000);
             }
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
