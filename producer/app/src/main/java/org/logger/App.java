@@ -3,30 +3,54 @@
  */
 package org.logger;
 
-import java.util.Arrays;
-import java.util.List;
+import java.time.Duration;
 import java.util.Properties;
 
 import org.apache.kafka.common.serialization.StringSerializer;
 import org.apache.kafka.common.serialization.ByteArraySerializer;
-
+import org.apache.kafka.common.serialization.Serdes;
+import org.apache.kafka.streams.KafkaStreams;
+import org.apache.kafka.clients.producer.ProducerConfig;
+import org.apache.kafka.streams.StreamsBuilder;
+import org.apache.kafka.streams.StreamsConfig;
+import org.messages.LogMessageSerde;
 import org.messages.Message;
+import org.streaming.ErrorFilteringStream;
 
 public class App {
     public Properties createProperties() {
         Properties props = new Properties();
-        props.put("bootstrap.servers", "localhost:9092");
-        props.put("key.serializer", StringSerializer.class);
-        props.put("value.serializer", ByteArraySerializer.class);
+        props.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, "localhost:9092");
+        props.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
+        props.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, ByteArraySerializer.class);
+
+        return props;
+    }
+
+    public Properties createStreamProperties() {
+        Properties props = new Properties();
+        props.put(StreamsConfig.APPLICATION_ID_CONFIG, "logs-stream-app");
+        props.put(StreamsConfig.BOOTSTRAP_SERVERS_CONFIG, "localhost:9092");
+        props.put(StreamsConfig.DEFAULT_KEY_SERDE_CLASS_CONFIG, Serdes.StringSerde.class);
+        props.put(StreamsConfig.DEFAULT_VALUE_SERDE_CLASS_CONFIG, LogMessageSerde.class);
 
         return props;
     }
 
     public static void main(String[] args) {
-        Properties props = new App().createProperties();
+        App app = new App();
+        Properties props = app.createProperties();
+        Properties streamProps = app.createStreamProperties();
         String topic = "raw-logs";
 
-        try (KafkaLogProducer producer = new KafkaLogProducer(props, topic)) {
+        StreamsBuilder builder = new StreamsBuilder();
+        ErrorFilteringStream.build(builder, topic, "error-logs");
+
+        try (
+            KafkaLogProducer producer = new KafkaLogProducer(props, topic);
+            KafkaStreams streams = new KafkaStreams(builder.build(), streamProps);
+        ) {
+            streams.start();
             while (true) {
                 Message message = LogGenerator.generateRandomMessage();
                 System.out.println(message);
@@ -34,7 +58,7 @@ public class App {
                 Thread.sleep(5000);
             }
         } catch (InterruptedException e) {
-            throw new RuntimeException(e);
+            Thread.currentThread().interrupt();
         }
     }
 }

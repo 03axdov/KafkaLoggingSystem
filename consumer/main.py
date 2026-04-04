@@ -1,18 +1,19 @@
 from confluent_kafka import Consumer
 
-TOPIC = "log-processing-topic"
+TOPIC = "error-logs"
 
 if __name__ == "__main__":
     
     config = {
         "bootstrap.servers": "localhost:9092",
-        "group.id": "log-consumer",
+        "group.id": "error-logs",
         "auto.offset.reset": "earliest"
     }
 
     consumer = Consumer(config)
     consumer.subscribe(topics=[TOPIC])
 
+    print(f"LISTENING TO {config["group.id"]} AT {config["bootstrap.servers"]}")
     try:
         while True:
             message = consumer.poll(1)
