@@ -1,6 +1,6 @@
 from confluent_kafka import Message
-from db.repositories import ErrorLogsRepository
-from db.repositories import LogsRepository
+from db.repositories.ErrorLogsRepository import ErrorLogsRepository
+from db.repositories.LogsRepository import LogsRepository
 from db.models import LogEvent
 import json
 
@@ -12,22 +12,21 @@ def processErrorLogs(message: Message, error_logs_repo: LogsRepository):
     value = value_bytes.decode("utf-8") if value_bytes is not None else None
 
     if value:
-        json = json.loads(value)
-        print(f"JSON: {json}")
+        message_json = json.loads(value)
         log_event: LogEvent = LogEvent(
-            json["timestamp"],
-            json["status"],
-            json["message"],
-            json["level"],
-            json["service"]
+            message_json["timestamp"],
+            message_json["status"],
+            message_json["message"],
+            message_json["level"],
+            message_json["service"]
         )
-        print(f"LogEvent: {log_event}")
         error_logs_repo.insert(log_event)
 
     print(
         f"Consumed event from topic {message.topic()}: "
         f"(key = {key}, value = {value})"
     )
+    print('-' * 10)
 
 
 def processErrorCounts(message: Message):

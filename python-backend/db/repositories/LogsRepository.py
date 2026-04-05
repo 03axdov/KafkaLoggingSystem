@@ -1,13 +1,10 @@
 from ..models import LogEvent
+from psycopg import Connection
+from .Repository import Repository
 
-
-class LogsRepository:
-    def __init__(self, db_connector):
-        self.db_connector = db_connector
-
-    
+class LogsRepository(Repository):
     def insert(self, log_event: LogEvent):
-        with self.db_connector.conn() as cursor:
+        with self.db_connector.cursor() as cursor:
             cursor.execute(
                 """
                 INSERT INTO logs(timestamp, status, message, level, service)

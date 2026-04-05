@@ -8,7 +8,7 @@ CREATE TABLE logs(
     message     TEXT,
     level       TEXT,
     service     TEXT
-)
+);
 
 CREATE TABLE error_logs(
     id          SERIAL PRIMARY KEY,
