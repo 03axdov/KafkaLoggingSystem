@@ -4,7 +4,6 @@ from datetime import datetime
 
 @dataclass
 class LogEvent:
-    id: int
     timestamp: datetime
     status: int
     message: str
@@ -13,6 +12,5 @@ class LogEvent:
 
 @dataclass
 class ErrorCount:
-    id: int
     service: str
     count: int
