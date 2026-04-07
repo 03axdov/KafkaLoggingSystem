@@ -1,7 +1,8 @@
 from rest_framework.routers import DefaultRouter
-from .views import ErrorLogEventViewSet
+from .views import LogEventViewSet, ErrorCountViewSet
 
 router = DefaultRouter()
-router.register(r"error-logs", ErrorLogEventViewSet, basename="error-logs")
+router.register(r"logs", LogEventViewSet, basename="logs")
+router.register(r"error-counts", ErrorCountViewSet, basename="error-counts")
 
 urlpatterns = router.urls

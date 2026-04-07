@@ -8,8 +8,8 @@ level: str
 service: str
 """
 
-# Create your models here.
-class ErrorLogEvent(models.Model):
+
+class LogEvent(models.Model):
     timestamp = models.DateTimeField()
     status = models.PositiveIntegerField()
     message = models.CharField(max_length=512)
@@ -18,3 +18,12 @@ class ErrorLogEvent(models.Model):
 
     def __str__(self):
         return f"[{self.level}] {self.service} ({self.message})"
+    
+
+class ErrorCount(models.Model):
+    service = models.CharField(max_length=128)
+    count = models.PositiveIntegerField()
+    created_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return self.service
