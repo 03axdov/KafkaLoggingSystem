@@ -1,4 +1,2 @@
 # Random Kafka Logging System
-> A system that creates random logs in Java, adds these to a topic that is then consumed by Python. Will eventually have streaming functionality and an interface for viewing e.g. error-intensity over time.
-
-Just to get familiar with Kafka.
+> A system that creates random logs in Java, adds these to a topic that is then consumed by Python and added to a Postgres database that can be interacted with through a Django REST API.
