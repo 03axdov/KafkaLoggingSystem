@@ -9,7 +9,6 @@ import type { ErrorCount, ErrorLogEvent, SummaryMetric } from './types/logs'
 import { getLevelRank } from './utils/logs'
 
 const refreshIntervalMs = 15000
-type DashboardView = 'logs' | 'errors'
 
 function App() {
   const [events, setEvents] = useState<ErrorLogEvent[]>([])
@@ -20,7 +19,6 @@ function App() {
   const [errorCountsError, setErrorCountsError] = useState<string | null>(null)
   const [serviceFilter, setServiceFilter] = useState('all')
   const [levelFilter, setLevelFilter] = useState('all')
-  const [activeView, setActiveView] = useState<DashboardView>('logs')
   const [isRefreshing, setIsRefreshing] = useState(false)
   const [lastUpdatedAt, setLastUpdatedAt] = useState(Date.now())
   const [now, setNow] = useState(Date.now())
@@ -224,140 +222,117 @@ function App() {
         </div>
       </section>
 
-      <nav className="view-tabs" aria-label="Dashboard views">
-        <button
-          className={activeView === 'logs' ? 'view-tab view-tab-active' : 'view-tab'}
-          type="button"
-          onClick={() => setActiveView('logs')}
-        >
-          Logs
-        </button>
-        <button
-          className={
-            activeView === 'errors' ? 'view-tab view-tab-active' : 'view-tab'
-          }
-          type="button"
-          onClick={() => setActiveView('errors')}
-        >
-          Error counts
-        </button>
-      </nav>
+      <section className="dashboard-section" aria-labelledby="errors-section-title">
+        <div className="section-heading">
+          <div>
+            <p className="eyebrow">Errors</p>
+            <h2 id="errors-section-title">Error counts over time</h2>
+          </div>
+          <span className="event-count">{errorCounts.length} samples</span>
+        </div>
 
-      {activeView === 'logs' ? (
-        <section className="dashboard-section" aria-labelledby="logs-section-title">
-          <div className="section-heading">
-            <div>
-              <p className="eyebrow">General logs</p>
-              <h2 id="logs-section-title">All log events</h2>
+        <section className="panel">
+          {areErrorCountsLoading ? (
+            <div className="state-card">Loading error counts...</div>
+          ) : null}
+
+          {!areErrorCountsLoading && errorCountsError ? (
+            <div className="state-card state-card-error">
+              Unable to fetch `/api/error-counts`: {errorCountsError}
             </div>
-          </div>
+          ) : null}
 
-          <div className="dashboard-layout">
-            <aside className="sidebar">
-              <section className="panel panel-compact">
-                <div className="panel-header">
-                  <div>
-                    <p className="eyebrow">Overview</p>
-                    <h3>Current view</h3>
-                  </div>
-                </div>
-
-                <div className="summary-grid" aria-label="Summary">
-                  {metrics.map((metric) => (
-                    <SummaryCard key={metric.label} {...metric} />
-                  ))}
-                </div>
-              </section>
-
-              <LatestEventCard event={latestEvent} />
-            </aside>
-
-            <section className="main-column">
-              <section className="panel">
-                <div className="panel-header">
-                  <div>
-                    <p className="eyebrow">Filters</p>
-                    <h3>Focus the event stream</h3>
-                  </div>
-                  <span className="event-count">{filteredEvents.length} shown</span>
-                </div>
-
-                <div className="filters">
-                  <SelectFilter
-                    label="Service"
-                    value={serviceFilter}
-                    options={services}
-                    defaultLabel="All services"
-                    onChange={setServiceFilter}
-                  />
-                  <SelectFilter
-                    label="Level"
-                    value={levelFilter}
-                    options={levels}
-                    defaultLabel="All levels"
-                    onChange={setLevelFilter}
-                  />
-                </div>
-              </section>
-
-              <section className="panel">
-                <div className="panel-header">
-                  <div>
-                    <p className="eyebrow">Event feed</p>
-                    <h3>Incoming log events</h3>
-                  </div>
-                </div>
-
-                {isLoading ? <div className="state-card">Loading log events...</div> : null}
-
-                {!isLoading && error ? (
-                  <div className="state-card state-card-error">
-                    Unable to fetch `/api/logs`: {error}
-                  </div>
-                ) : null}
-
-                {!isLoading && !error && filteredEvents.length === 0 ? (
-                  <div className="state-card">
-                    No log events match the current filters.
-                  </div>
-                ) : null}
-
-                {!isLoading && !error && filteredEvents.length > 0 ? (
-                  <EventTable events={filteredEvents} />
-                ) : null}
-              </section>
-            </section>
-          </div>
+          {!areErrorCountsLoading && !errorCountsError ? (
+            <ErrorCountChart errorCounts={errorCounts} asOf={lastUpdatedAt} />
+          ) : null}
         </section>
-      ) : null}
+      </section>
 
-      {activeView === 'errors' ? (
-        <section className="dashboard-section" aria-labelledby="errors-section-title">
-          <div className="section-heading">
-            <div>
-              <p className="eyebrow">Errors</p>
-              <h2 id="errors-section-title">Error counts over time</h2>
-            </div>
-            <span className="event-count">{errorCounts.length} samples</span>
+      <section className="dashboard-section" aria-labelledby="logs-section-title">
+        <div className="section-heading">
+          <div>
+            <p className="eyebrow">General logs</p>
+            <h2 id="logs-section-title">All log events</h2>
           </div>
+        </div>
 
-          <section className="panel">
-            {areErrorCountsLoading ? (
-              <div className="state-card">Loading error counts...</div>
-            ) : null}
-
-            {!areErrorCountsLoading && errorCountsError ? (
-              <div className="state-card state-card-error">
-                Unable to fetch `/api/error-counts`: {errorCountsError}
+        <div className="dashboard-layout">
+          <aside className="sidebar">
+            <section className="panel panel-compact">
+              <div className="panel-header">
+                <div>
+                  <p className="eyebrow">Overview</p>
+                  <h3>Current view</h3>
+                </div>
               </div>
-            ) : null}
 
-            {!areErrorCountsLoading && !errorCountsError ? (
-              <ErrorCountChart errorCounts={errorCounts} asOf={lastUpdatedAt} />
-            ) : null}
+              <div className="summary-grid" aria-label="Summary">
+                {metrics.map((metric) => (
+                  <SummaryCard key={metric.label} {...metric} />
+                ))}
+              </div>
+            </section>
+
+            <LatestEventCard event={latestEvent} />
+          </aside>
+
+          <section className="main-column">
+            <section className="panel">
+              <div className="panel-header">
+                <div>
+                  <p className="eyebrow">Filters</p>
+                  <h3>Focus the event stream</h3>
+                </div>
+                <span className="event-count">{filteredEvents.length} shown</span>
+              </div>
+
+              <div className="filters">
+                <SelectFilter
+                  label="Service"
+                  value={serviceFilter}
+                  options={services}
+                  defaultLabel="All services"
+                  onChange={setServiceFilter}
+                />
+                <SelectFilter
+                  label="Level"
+                  value={levelFilter}
+                  options={levels}
+                  defaultLabel="All levels"
+                  onChange={setLevelFilter}
+                />
+              </div>
+            </section>
+
+            <section className="panel">
+              <div className="panel-header">
+                <div>
+                  <p className="eyebrow">Event feed</p>
+                  <h3>Incoming log events</h3>
+                </div>
+              </div>
+
+              {isLoading ? <div className="state-card">Loading log events...</div> : null}
+
+              {!isLoading && error ? (
+                <div className="state-card state-card-error">
+                  Unable to fetch `/api/logs`: {error}
+                </div>
+              ) : null}
+
+              {!isLoading && !error && filteredEvents.length === 0 ? (
+                <div className="state-card">
+                  No log events match the current filters.
+                </div>
+              ) : null}
+
+              {!isLoading && !error && filteredEvents.length > 0 ? (
+                <EventTable events={filteredEvents} />
+              ) : null}
+            </section>
           </section>
-        </section>
-      ) : null}
+        </div>
+      </section>
     </main>
   )
 }

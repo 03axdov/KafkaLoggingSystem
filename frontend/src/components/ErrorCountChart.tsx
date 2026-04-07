@@ -101,13 +101,16 @@ function ErrorCountChart({ errorCounts, asOf }: ErrorCountChartProps) {
           ]}
           yAxis={[{ id: 'errors', min: 0 }]}
           series={series}
-          grid={{ horizontal: true, vertical: false }}
+          grid={{ horizontal: true, vertical: true }}
           axisHighlight={{ x: 'line' }}
           skipAnimation
           sx={{
+            color: '#dce6f7',
+            '& text': { fill: '#dce6f7' },
             '& .MuiChartsAxis-line': { stroke: '#536783' },
             '& .MuiChartsAxis-tick': { stroke: '#536783' },
             '& .MuiChartsAxis-tickLabel': { fill: '#aab8cf' },
+            '& .MuiChartsAxis-label': { fill: '#aab8cf' },
             '& .MuiChartsLegend-label': { fill: '#dce6f7' },
             '& .MuiChartsGrid-line': { stroke: 'rgba(88, 117, 170, 0.18)' },
           }}
