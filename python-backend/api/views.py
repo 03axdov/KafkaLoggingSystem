@@ -1,9 +1,9 @@
 from django.shortcuts import render
 from rest_framework import viewsets
-from .serializers import LogEventSerializer
-from .models import LogEvent
+from .serializers import ErrorLogEventSerializer
+from .models import ErrorLogEvent
 
 # Create your views here.
-class LogEventViewSet(viewsets.ModelViewSet):
-    queryset = LogEvent.objects.all().order_by("-timestamp")
-    serializer_class = LogEventSerializer
+class ErrorLogEventViewSet(viewsets.ModelViewSet):
+    queryset = ErrorLogEvent.objects.all().order_by("-timestamp")
+    serializer_class = ErrorLogEventSerializer

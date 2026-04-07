@@ -1,7 +1,7 @@
 from rest_framework import serializers
-from .models import LogEvent
+from .models import ErrorLogEvent
 
-class LogEventSerializer(serializers.ModelSerializer):
+class ErrorLogEventSerializer(serializers.ModelSerializer):
     class Meta:
-        model = LogEvent
+        model = ErrorLogEvent
         fields = "__all__"

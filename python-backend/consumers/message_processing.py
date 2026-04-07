@@ -1,6 +1,6 @@
 from confluent_kafka import Message
 import json
-from api.models import LogEvent
+from api.models import ErrorLogEvent
 
 def processErrorLogs(message: Message):
     key_bytes = message.key()
@@ -11,7 +11,7 @@ def processErrorLogs(message: Message):
 
     if value:
         message_json = json.loads(value)
-        LogEvent.objects.create(
+        ErrorLogEvent.objects.create(
             timestamp = message_json["timestamp"],
             status = message_json["status"],
             message = message_json["message"],

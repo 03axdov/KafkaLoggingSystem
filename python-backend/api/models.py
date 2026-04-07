@@ -9,7 +9,7 @@ service: str
 """
 
 # Create your models here.
-class LogEvent(models.Model):
+class ErrorLogEvent(models.Model):
     timestamp = models.DateTimeField()
     status = models.PositiveIntegerField()
     message = models.CharField(max_length=512)
