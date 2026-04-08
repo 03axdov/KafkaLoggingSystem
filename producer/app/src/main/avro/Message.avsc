@@ -1,0 +1,12 @@
+{
+  "type": "record",
+  "name": "Message",
+  "namespace": "org.schema.avro",
+  "fields": [
+    { "name": "timestamp", "type": { "type": "long", "logicalType": "timestamp-millis" } },
+    { "name": "status", "type": "int" },
+    { "name": "message", "type": "string" },
+    { "name": "level", "type": "string" },
+    { "name": "service", "type": "string" }
+  ]
+}

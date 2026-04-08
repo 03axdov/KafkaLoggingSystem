@@ -13,12 +13,19 @@ plugins {
 repositories {
     // Use Maven Central for resolving dependencies.
     mavenCentral()
+    maven("https://packages.confluent.io/maven/")
 }
+
+val avroTools by configurations.creating
 
 dependencies {
     // Source: https://mvnrepository.com/artifact/org.apache.kafka/kafka-clients
     implementation("org.apache.kafka:kafka-clients:4.2.0")
     implementation("org.apache.kafka:kafka-streams:4.2.0")
+    implementation("org.apache.avro:avro:1.12.0")
+    avroTools("org.apache.avro:avro-tools:1.12.0")
+    implementation("io.confluent:kafka-avro-serializer:8.2.0")
+
     implementation("com.fasterxml.jackson.core:jackson-databind:2.21.2")
     implementation("com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.21.2")
 
@@ -46,4 +53,19 @@ application {
 tasks.named<Test>("test") {
     // Use JUnit Platform for unit tests.
     useJUnitPlatform()
+}
+
+tasks.register<JavaExec>("generateAvroJava") {
+    group = "build"
+    description = "Generate Java classes from Avro schemas"
+
+    classpath = avroTools
+    mainClass.set("org.apache.avro.tool.Main")
+
+    args(
+        "compile",
+        "schema",
+        "$projectDir/src/main/avro/Message.avsc",
+        "$projectDir/src/main/java"
+    )
 }
