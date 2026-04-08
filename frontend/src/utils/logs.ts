@@ -1,6 +1,6 @@
 import type { ErrorLogEvent } from '../types/logs'
 
-const levelOrder = ['critical', 'error', 'warning', 'info', 'debug']
+const levelOrder = ['critical', 'error', 'error_fixed', 'warning', 'info', 'debug']
 
 export function formatTimestamp(value: string) {
   const date = new Date(value)

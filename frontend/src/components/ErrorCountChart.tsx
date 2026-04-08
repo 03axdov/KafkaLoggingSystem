@@ -99,10 +99,73 @@ function ErrorCountChart({ errorCounts, asOf }: ErrorCountChartProps) {
               valueFormatter: (value) => formatTick(value.toISOString()),
             },
           ]}
-          yAxis={[{ id: 'errors', min: 0 }]}
+          yAxis={[
+            {
+              id: 'errors',
+              min: 0,
+              tickMinStep: 1,
+              valueFormatter: (value: number) =>
+                Number.isInteger(value) ? value.toString() : '',
+            },
+          ]}
           series={series}
           grid={{ horizontal: true, vertical: true }}
           axisHighlight={{ x: 'line' }}
+          slotProps={{
+            legend: {
+              sx: {
+                color: '#dce6f7',
+                '& .MuiChartsLegend-label': {
+                  color: '#dce6f7',
+                },
+              },
+            },
+            tooltip: {
+              sx: {
+                border: '1px solid rgba(88, 117, 170, 0.28)',
+                borderRadius: '8px',
+                background: '#080d16',
+                backgroundColor: '#080d16',
+                boxShadow: '0 18px 42px rgba(0, 0, 0, 0.44)',
+                color: '#dce6f7',
+                overflow: 'hidden',
+                '--mui-palette-background-paper': '#080d16',
+                '--mui-palette-text-primary': '#edf4ff',
+                '--mui-palette-text-secondary': '#aab8cf',
+                '& .MuiChartsTooltip-table': {
+                  borderCollapse: 'separate',
+                  background: 'transparent',
+                },
+                '& .MuiChartsTooltip-table caption': {
+                  borderBottom: '1px solid rgba(88, 117, 170, 0.18)',
+                  background: '#0d1422',
+                  color: '#8fa2c2',
+                  fontWeight: 700,
+                },
+                '& .MuiChartsTooltip-cell': {
+                  borderBottom: 0,
+                  background: 'transparent',
+                  color: '#dce6f7',
+                  fontSize: '0.86rem',
+                  letterSpacing: 'normal',
+                  paddingTop: '0.55rem',
+                  paddingBottom: '0.55rem',
+                  textTransform: 'none',
+                },
+                '& .MuiChartsTooltip-labelCell': {
+                  color: '#aab8cf',
+                  fontWeight: 600,
+                },
+                '&& .MuiChartsTooltip-valueCell, && .MuiChartsTooltip-axisValueCell': {
+                  color: '#edf4ff',
+                  fontWeight: 700,
+                },
+                '& .MuiChartsTooltip-markContainer': {
+                  width: '1.35rem',
+                },
+              },
+            },
+          }}
           sx={{
             color: '#dce6f7',
             '& svg': { color: '#dce6f7' },
@@ -113,6 +176,7 @@ function ErrorCountChart({ errorCounts, asOf }: ErrorCountChartProps) {
               fill: '#aab8cf',
             },
             '& .MuiChartsLegend-label': {
+              color: '#dce6f7',
               fill: '#dce6f7',
             },
             '& .MuiChartsGrid-line': { stroke: 'rgba(88, 117, 170, 0.18)' },

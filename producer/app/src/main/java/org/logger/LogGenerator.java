@@ -30,7 +30,7 @@ public class LogGenerator {
 
     public static Message generateRandomMessage() {
         Instant timestamp = Instant.now();
-        int status = random.nextInt(600); // 0–599
+        int status = random.nextInt(600);
         String level = levels[random.nextInt(levels.length)];
         String service = services[random.nextInt(services.length)];
         String message = messages[random.nextInt(messages.length)];

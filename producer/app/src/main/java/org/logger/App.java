@@ -3,8 +3,11 @@
  */
 package org.logger;
 
-import java.time.Duration;
+import java.util.Random;
 import java.util.Properties;
+import java.util.List;
+import java.time.Instant;
+import java.util.ArrayList;
 
 import org.apache.kafka.common.serialization.StringSerializer;
 import org.apache.kafka.common.serialization.ByteArraySerializer;
@@ -13,6 +16,7 @@ import org.apache.kafka.streams.KafkaStreams;
 import org.apache.kafka.clients.producer.ProducerConfig;
 import org.apache.kafka.streams.StreamsBuilder;
 import org.apache.kafka.streams.StreamsConfig;
+import org.messages.LogMessage;
 import org.messages.LogMessageSerde;
 import org.messages.Message;
 import org.streaming.ErrorFilteringStream;
@@ -42,6 +46,8 @@ public class App {
     }
 
     public static void main(String[] args) {
+        Random rand = new Random();
+
         App app = new App();
         Properties props = app.createProperties();
         Properties streamProps = app.createStreamProperties();
@@ -51,6 +57,8 @@ public class App {
         ErrorFilteringStream.build(builder, rawLogsTopic, "error-logs");
         ErrorCountsStream.build(builder, "error-logs", "error-counts");
 
+        List<Message> openErrors = new ArrayList<Message>();
+
         try (
             KafkaLogProducer producer = new KafkaLogProducer(props, rawLogsTopic);
             KafkaStreams streams = new KafkaStreams(builder.build(), streamProps);
@@ -58,9 +66,23 @@ public class App {
             streams.start();
             while (true) {
                 Message message = LogGenerator.generateRandomMessage();
-                System.out.println(message);
+
+                if ("ERROR".equals(message.level()) && openErrors.size() < 1000) {
+                    openErrors.add(message);
+                } else if (rand.nextInt(20) >= 17 && !openErrors.isEmpty()) {
+                    Message toFix = openErrors.remove(rand.nextInt(openErrors.size()));
+
+                    Instant timestamp = Instant.now();
+                    int status = 200;
+                    String level = "ERROR_FIXED";
+                    String service = toFix.service();
+                    String msg = "FIXED: " + toFix.message();
+
+                    message = new LogMessage(timestamp, status, msg, level, service);
+                }
+                System.out.println("Produced: " + message);
                 producer.sendMessage(message);
-                Thread.sleep(1000);
+                Thread.sleep(500);
             }
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();

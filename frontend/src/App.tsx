@@ -8,7 +8,7 @@ import SummaryCard from './components/SummaryCard'
 import type { ErrorCount, ErrorLogEvent, SummaryMetric } from './types/logs'
 import { getLevelRank } from './utils/logs'
 
-const refreshIntervalMs = 15000
+const refreshIntervalMs = 3000
 
 function App() {
   const [events, setEvents] = useState<ErrorLogEvent[]>([])
