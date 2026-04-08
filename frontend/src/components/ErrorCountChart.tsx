@@ -72,8 +72,8 @@ function ErrorCountChart({ errorCounts, asOf }: ErrorCountChartProps) {
         id: serviceName,
         label: serviceName,
         color: chartColors[serviceIndex % chartColors.length],
-        curve: 'stepAfter',
-        showMark: true,
+        curve: 'monotoneX',
+        showMark: false,
         connectNulls: true,
         data: timeline.map((timestamp) => {
           latestCount = serviceCountsByTimestamp.get(timestamp) ?? latestCount
@@ -103,16 +103,26 @@ function ErrorCountChart({ errorCounts, asOf }: ErrorCountChartProps) {
           series={series}
           grid={{ horizontal: true, vertical: true }}
           axisHighlight={{ x: 'line' }}
-          skipAnimation
           sx={{
             color: '#dce6f7',
-            '& text': { fill: '#dce6f7' },
+            '& svg': { color: '#dce6f7' },
+            '& text, & tspan': { fill: '#dce6f7' },
             '& .MuiChartsAxis-line': { stroke: '#536783' },
             '& .MuiChartsAxis-tick': { stroke: '#536783' },
-            '& .MuiChartsAxis-tickLabel': { fill: '#aab8cf' },
-            '& .MuiChartsAxis-label': { fill: '#aab8cf' },
-            '& .MuiChartsLegend-label': { fill: '#dce6f7' },
+            '& .MuiChartsAxis-tickLabel, & .MuiChartsAxis-label': {
+              fill: '#aab8cf',
+            },
+            '& .MuiChartsLegend-label': {
+              fill: '#dce6f7',
+            },
             '& .MuiChartsGrid-line': { stroke: 'rgba(88, 117, 170, 0.18)' },
+            '& .MuiLineElement-root': {
+              filter: 'drop-shadow(0 0 6px rgba(143, 199, 255, 0.18))',
+              strokeWidth: 3,
+            },
+            '& .MuiChartsAxisHighlight-root': {
+              stroke: 'rgba(220, 230, 247, 0.45)',
+            },
           }}
         />
       </div>
