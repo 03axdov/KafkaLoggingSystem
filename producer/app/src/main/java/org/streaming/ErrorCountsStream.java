@@ -1,5 +1,8 @@
 package org.streaming;
 
+import java.util.Map;
+
+import org.apache.kafka.common.serialization.Serde;
 import org.apache.kafka.common.serialization.Serdes;
 import org.apache.kafka.streams.StreamsBuilder;
 import org.apache.kafka.streams.kstream.Consumed;
@@ -8,16 +11,25 @@ import org.apache.kafka.streams.kstream.KTable;
 import org.apache.kafka.streams.kstream.Materialized;
 import org.apache.kafka.streams.kstream.Produced;
 import org.messages.LogMessage;
-import org.messages.LogMessageSerde;
+import org.messages.MessageAvro;
+
+import io.confluent.kafka.streams.serdes.avro.SpecificAvroSerde;
 
 public final class ErrorCountsStream {
     public static void build(StreamsBuilder builder, String inputTopic, String outputTopic) {
-        KStream<String, LogMessage> messages = builder.stream(
+        Serde<org.schema.avro.Message> messageSerde = new SpecificAvroSerde<>();
+        messageSerde.configure(
+            Map.of("schema.registry.url", "http://localhost:8081"),
+            false // false = value serde, true = key serde
+        );
+
+        KStream<String, org.schema.avro.Message> messages = builder.stream(
             inputTopic,
-            Consumed.with(Serdes.String(), new LogMessageSerde())
+            Consumed.with(Serdes.String(), messageSerde)
         );
 
         KTable<String, Long> serviceOpenErrorCountsTable = messages
+            .mapValues((msg) -> MessageAvro.fromAvro(msg))
             .filter((key, msg) ->
                 msg != null &&
                 msg.service() != null &&

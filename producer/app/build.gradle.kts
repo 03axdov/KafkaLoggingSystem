@@ -13,7 +13,6 @@ plugins {
 repositories {
     // Use Maven Central for resolving dependencies.
     mavenCentral()
-    maven("https://packages.confluent.io/maven/")
 }
 
 val avroTools by configurations.creating
@@ -25,9 +24,7 @@ dependencies {
     implementation("org.apache.avro:avro:1.12.0")
     avroTools("org.apache.avro:avro-tools:1.12.0")
     implementation("io.confluent:kafka-avro-serializer:8.2.0")
-
-    implementation("com.fasterxml.jackson.core:jackson-databind:2.21.2")
-    implementation("com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.21.2")
+    implementation("io.confluent:kafka-streams-avro-serde:8.2.0")
 
     // Use JUnit Jupiter for testing.
     testImplementation(libs.junit.jupiter)

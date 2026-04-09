@@ -12,4 +12,14 @@ public class MessageAvro {
             .setService(message.service())
             .build();
     }
+
+    public static final LogMessage fromAvro(org.schema.avro.Message message) {
+        return new LogMessage(
+            message.getTimestamp(),
+            message.getStatus(),
+            message.getMessage().toString(),
+            message.getLevel().toString(),
+            message.getService().toString()
+        );
+    }
 }
