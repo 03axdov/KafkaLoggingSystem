@@ -3,25 +3,34 @@ import json
 from api.models import LogEvent, ErrorCount
 from django.utils import timezone
 from django.db import close_old_connections
+from datetime import datetime
+
+from confluent_kafka.schema_registry.avro import AvroDeserializer
+from confluent_kafka.serialization import SerializationContext, MessageField
 
 
-def processRawLogs(message: Message):
+def processRawLogs(message: Message, avro_deserializer: AvroDeserializer):
     close_old_connections()
 
     key_bytes = message.key()
     value_bytes = message.value()
 
     key = key_bytes.decode("utf-8") if key_bytes is not None else None
-    value = value_bytes.decode("utf-8") if value_bytes is not None else None
+    
+    value = None
+    if value_bytes is not None:
+        value = avro_deserializer(
+            value_bytes,
+            SerializationContext(message.topic(), MessageField.VALUE)
+        )
 
     if value:
-        message_json = json.loads(value)
         LogEvent.objects.create(
-            timestamp = message_json["timestamp"],
-            status = message_json["status"],
-            message = message_json["message"],
-            level = message_json["level"],
-            service = message_json["service"]
+            timestamp = value["timestamp"],
+            status = value["status"],
+            message = value["message"],
+            level = value["level"],
+            service = value["service"]
         )
 
     print(

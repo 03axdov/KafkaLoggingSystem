@@ -10,6 +10,9 @@ from confluent_kafka import Consumer, Message
 from .KafkaConsumerService import KafkaConsumerService
 from .message_processing import processErrorCounts, processRawLogs
 
+from confluent_kafka.schema_registry import SchemaRegistryClient
+from confluent_kafka.schema_registry.avro import AvroDeserializer
+
 
 if __name__ == "__main__":
 
@@ -28,10 +31,20 @@ if __name__ == "__main__":
         "auto.offset.reset": "earliest"
     }
     
+    schema_registry_conf = {
+        "url": os.getenv("SCHEMA_REGISTRY_URL")
+    }
+    schema_registry_client = SchemaRegistryClient(schema_registry_conf)
+    
+    avro_deserializer = AvroDeserializer(
+        schema_registry_client,
+        from_dict=lambda obj, ctx: obj
+    )
+    
     logs_consumer: KafkaConsumerService = KafkaConsumerService(
         ["raw-logs"], 
         logs_config, 
-        processRawLogs,
+        lambda raw_log: processRawLogs(raw_log, avro_deserializer),
         stop_event
     )
     error_counts_consumer: KafkaConsumerService = KafkaConsumerService(
