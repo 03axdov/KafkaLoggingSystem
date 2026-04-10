@@ -95,10 +95,6 @@ services:
   producer:
     build: ./producer
     container_name: kafka-producer
-    command: ./gradlew run
-    working_dir: /app
-    volumes:
-      - ./producer:/app
     depends_on:
       schema-registry:
         condition: service_healthy
