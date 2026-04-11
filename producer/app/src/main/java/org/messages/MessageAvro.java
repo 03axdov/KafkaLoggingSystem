@@ -1,10 +1,9 @@
 package org.messages;
 
 public class MessageAvro {
-    private static final org.schema.avro.Message.Builder builder = org.schema.avro.Message.newBuilder();
     
     public static final org.schema.avro.Message toAvro(Message message) {
-        return builder
+        return org.schema.avro.Message.newBuilder()
             .setTimestamp(message.timestamp())
             .setStatus(message.status())
             .setMessage(message.message())

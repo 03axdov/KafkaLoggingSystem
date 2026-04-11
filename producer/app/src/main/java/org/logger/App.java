@@ -15,10 +15,11 @@ import org.apache.kafka.streams.KafkaStreams;
 import org.apache.kafka.clients.producer.ProducerConfig;
 import org.apache.kafka.streams.StreamsBuilder;
 import org.apache.kafka.streams.StreamsConfig;
-import org.apache.kafka.streams.errors.LogAndContinueExceptionHandler;
+import org.apache.kafka.streams.errors.StreamsUncaughtExceptionHandler;
 import org.messages.LogMessage;
 import org.messages.Message;
 import org.streaming.ErrorFilteringStream;
+import org.apache.kafka.streams.Topology;
 
 import io.confluent.kafka.serializers.KafkaAvroSerializer;
 
@@ -37,11 +38,18 @@ public class App {
 
     public Properties createStreamProperties() {
         Properties props = new Properties();
-        props.put(StreamsConfig.APPLICATION_ID_CONFIG, "logs-stream-app");
+        props.put(StreamsConfig.APPLICATION_ID_CONFIG, "logs-stream-application");
         props.put(StreamsConfig.BOOTSTRAP_SERVERS_CONFIG, System.getenv("KAFKA_BOOTSTRAP_SERVERS"));
         props.put(StreamsConfig.DEFAULT_KEY_SERDE_CLASS_CONFIG, Serdes.StringSerde.class);
         props.put(StreamsConfig.DEFAULT_VALUE_SERDE_CLASS_CONFIG, Serdes.LongSerde.class);
-        props.put(StreamsConfig.DESERIALIZATION_EXCEPTION_HANDLER_CLASS_CONFIG,LogAndContinueExceptionHandler.class);
+
+        props.put(
+            StreamsConfig.DESERIALIZATION_EXCEPTION_HANDLER_CLASS_CONFIG,
+            org.apache.kafka.streams.errors.LogAndContinueExceptionHandler.class
+        );
+
+        props.put("schema.registry.url", System.getenv("SCHEMA_REGISTRY_URL"));
+        props.put("specific.avro.reader", true);
         
         props.put(StreamsConfig.STATESTORE_CACHE_MAX_BYTES_CONFIG, 0);
         props.put(StreamsConfig.COMMIT_INTERVAL_MS_CONFIG, 100);
@@ -60,14 +68,33 @@ public class App {
         StreamsBuilder builder = new StreamsBuilder();
         ErrorFilteringStream.build(builder, rawLogsTopic, "error-logs");
         ErrorCountsStream.build(builder, "error-logs", "error-counts");
+        // DebugStream.build(builder, "raw-logs", "error-logs");
 
         List<Message> openErrors = new ArrayList<Message>();
 
+        Topology topology = builder.build();
+
+        System.out.println("TOPOLOGY:");
+        System.out.println(topology.describe());
+
         try (
             KafkaLogProducer producer = new KafkaLogProducer(props, rawLogsTopic);
-            KafkaStreams streams = new KafkaStreams(builder.build(), streamProps);
+            KafkaStreams streams = new KafkaStreams(topology, streamProps);
         ) {
+
+            streams.setStateListener((newState, oldState) ->
+                System.out.println("State: " + oldState + " -> " + newState));
+
+            streams.setUncaughtExceptionHandler(exception -> {
+                System.out.println("Uncaught exception in stream thread " + Thread.currentThread().getName());
+                exception.printStackTrace();
+                return StreamsUncaughtExceptionHandler.StreamThreadExceptionResponse.SHUTDOWN_APPLICATION;
+            });
+
+            streams.cleanUp();
+            
             streams.start();
+
             while (true) {
                 Message message = LogGenerator.generateRandomMessage();
 

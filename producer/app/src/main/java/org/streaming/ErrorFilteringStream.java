@@ -16,7 +16,10 @@ public final class ErrorFilteringStream {
     public static void build(StreamsBuilder builder, String inputTopic, String outputTopic) {
         Serde<org.schema.avro.Message> messageSerde = new SpecificAvroSerde<>();
         messageSerde.configure(
-            Map.of("schema.registry.url", System.getenv("SCHEMA_REGISTRY_URL")),
+            Map.of(
+                "schema.registry.url", System.getenv("SCHEMA_REGISTRY_URL"),
+                "specific.avro.reader", "true"
+            ),
             false // false = value serde, true = key serde
         );
 
@@ -25,12 +28,10 @@ public final class ErrorFilteringStream {
             Consumed.with(Serdes.String(), messageSerde)
         );
 
-        messages.peek((key, msg) -> System.out.println("READ: key=" + key + ", msg=" + msg));
-
         messages
             .filter((key, msg) -> {
-                System.out.println("MESSAGE: " + msg);
-                return msg != null && ("ERROR".equals(msg.getLevel().toString()) || "ERROR_FIXED".equals(msg.getLevel().toString()))})
+                return msg != null && ("ERROR".equals(msg.getLevel().toString()) || "ERROR_FIXED".equals(msg.getLevel().toString()));
+            })
             .to(outputTopic, Produced.with(Serdes.String(), messageSerde));
 
     }
