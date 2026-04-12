@@ -1,3 +1,4 @@
+import { memo, useMemo, useRef } from 'react'
 import { LineChart, type LineChartProps } from '@mui/x-charts'
 import type { ErrorCount } from '../types/logs'
 
@@ -7,10 +8,10 @@ type ErrorCountChartProps = {
 }
 
 const chartColors = [
-  '#f08a9d',
-  '#8fc7ff',
-  '#f4c76f',
-  '#93dda5',
+  '#00eeff',
+  '#b700ff',
+  '#60a3fa',
+  '#fd1efd',
   '#c2a2ff',
   '#ffad7a',
 ]
@@ -38,29 +39,51 @@ function formatChartDate(value: Date) {
 }
 
 function ErrorCountChart({ errorCounts, asOf }: ErrorCountChartProps) {
-  const validErrorCounts = errorCounts
-    .map((errorCount) => ({
-      ...errorCount,
-      timestamp: new Date(errorCount.created_at).getTime(),
-    }))
-    .filter((errorCount) => !Number.isNaN(errorCount.timestamp))
-    .sort((left, right) => left.timestamp - right.timestamp)
+  const colorAssignmentsRef = useRef(new Map<string, string>())
+  const nextColorIndexRef = useRef(0)
 
-  if (validErrorCounts.length === 0) {
-    return <div className="state-card">No error count data available yet.</div>
+  const getServiceColor = (serviceName: string) => {
+    const existingColor = colorAssignmentsRef.current.get(serviceName)
+
+    if (existingColor) {
+      return existingColor
+    }
+
+    const assignedColor =
+      chartColors[nextColorIndexRef.current % chartColors.length]
+    nextColorIndexRef.current += 1
+    colorAssignmentsRef.current.set(serviceName, assignedColor)
+
+    return assignedColor
   }
 
-  const serviceNames = Array.from(
-    new Set(validErrorCounts.map((errorCount) => errorCount.service)),
-  ).sort()
+  const { latestTimestamp, series, xAxisData } = useMemo(() => {
+    const validErrorCounts = errorCounts
+      .map((errorCount) => ({
+        ...errorCount,
+        timestamp: new Date(errorCount.created_at).getTime(),
+      }))
+      .filter((errorCount) => !Number.isNaN(errorCount.timestamp))
+      .sort((left, right) => left.timestamp - right.timestamp)
 
-  const timeline = Array.from(
-    new Set([...validErrorCounts.map((errorCount) => errorCount.timestamp), asOf]),
-  ).sort((left, right) => left - right)
+    if (validErrorCounts.length === 0) {
+      return {
+        latestTimestamp: null,
+        series: [] as LineChartProps['series'],
+        xAxisData: [] as Date[],
+      }
+    }
 
-  const xAxisData = timeline.map((timestamp) => new Date(timestamp))
-  const series: LineChartProps['series'] = serviceNames.map(
-    (serviceName, serviceIndex) => {
+    const serviceNames = Array.from(
+      new Set(validErrorCounts.map((errorCount) => errorCount.service)),
+    ).sort()
+
+    const timeline = Array.from(
+      new Set(validErrorCounts.map((errorCount) => errorCount.timestamp)),
+    ).sort((left, right) => left - right)
+
+    const xAxisData = timeline.map((timestamp) => new Date(timestamp))
+    const series: LineChartProps['series'] = serviceNames.map((serviceName) => {
       let latestCount: number | null = null
       const serviceCountsByTimestamp = new Map(
         validErrorCounts
@@ -71,7 +94,7 @@ function ErrorCountChart({ errorCounts, asOf }: ErrorCountChartProps) {
       return {
         id: serviceName,
         label: serviceName,
-        color: chartColors[serviceIndex % chartColors.length],
+        color: getServiceColor(serviceName),
         curve: 'monotoneX',
         showMark: false,
         connectNulls: true,
@@ -82,8 +105,18 @@ function ErrorCountChart({ errorCounts, asOf }: ErrorCountChartProps) {
         valueFormatter: (value) =>
           value === null ? null : `${value} errors`,
       }
-    },
-  )
+    })
+
+    return {
+      latestTimestamp: timeline[timeline.length - 1] ?? asOf,
+      series,
+      xAxisData,
+    }
+  }, [asOf, errorCounts])
+
+  if (series.length === 0 || latestTimestamp === null) {
+    return <div className="state-card">No error count data available yet.</div>
+  }
 
   return (
     <div className="error-chart-card">
@@ -193,10 +226,10 @@ function ErrorCountChart({ errorCounts, asOf }: ErrorCountChartProps) {
 
       <p className="chart-note">
         Counts carry forward between updates. Latest sample:{' '}
-        {formatChartDate(new Date(timeline[timeline.length - 1]))}
+        {formatChartDate(new Date(latestTimestamp))}
       </p>
     </div>
   )
 }
 
-export default ErrorCountChart
+export default memo(ErrorCountChart)

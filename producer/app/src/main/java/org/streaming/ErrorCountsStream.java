@@ -6,11 +6,11 @@ import org.apache.kafka.common.serialization.Serde;
 import org.apache.kafka.common.serialization.Serdes;
 import org.apache.kafka.streams.StreamsBuilder;
 import org.apache.kafka.streams.kstream.Consumed;
+import org.apache.kafka.streams.kstream.Grouped;
 import org.apache.kafka.streams.kstream.KStream;
 import org.apache.kafka.streams.kstream.KTable;
 import org.apache.kafka.streams.kstream.Materialized;
 import org.apache.kafka.streams.kstream.Produced;
-import org.messages.MessageAvro;
 
 import io.confluent.kafka.streams.serdes.avro.SpecificAvroSerde;
 
@@ -28,20 +28,20 @@ public final class ErrorCountsStream {
         );
 
         KTable<String, Long> serviceOpenErrorCountsTable = messages
-            .mapValues((msg) -> MessageAvro.fromAvro(msg))
             .filter((key, msg) ->
                 msg != null &&
-                msg.service() != null &&
-                msg.level() != null &&
-                ("ERROR".equals(msg.level()) || "ERROR_FIXED".equals(msg.level()))
+                msg.getService() != null &&
+                msg.getLevel() != null &&
+                ("ERROR".contentEquals(msg.getLevel()) || "ERROR_FIXED".contentEquals(msg.getLevel()))
             )
-            .groupBy((key, msg) -> msg.service())
+            .groupBy((key, msg) -> msg.getService().toString(),
+                Grouped.with(Serdes.String(), messageSerde))
             .aggregate(
                 () -> 0L,
                 (service, msg, currentCount) -> {
-                    if ("ERROR".equals(msg.level())) {
+                    if ("ERROR".contentEquals(msg.getLevel())) {
                         return currentCount + 1;
-                    } else if ("ERROR_FIXED".equals(msg.level())) {
+                    } else if ("ERROR_FIXED".contentEquals(msg.getLevel())) {
                         return Math.max(0L, currentCount - 1);
                     }
                     return currentCount;

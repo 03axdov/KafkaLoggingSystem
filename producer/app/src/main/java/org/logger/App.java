@@ -113,7 +113,7 @@ public class App {
                 }
                 System.out.println("Produced: " + message);
                 producer.sendMessage(message);
-                Thread.sleep(500);
+                Thread.sleep(200);
             }
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
