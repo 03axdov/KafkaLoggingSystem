@@ -3,7 +3,7 @@
 
 ## System
 ### Demo
-[![Demo](./README_FILES/KafkaLoggingDemo.jpg)](./README_FILES/KafkaLoggingDemo.mp4)
+![Demo](./README_FILES/KafkaLoggingDemo.gif)
 
 ### System Design
 ![System Design](./README_FILES/SystemDesign.svg)
